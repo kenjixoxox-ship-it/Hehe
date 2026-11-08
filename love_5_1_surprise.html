@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#050505">
+<title>A little surprise for you ♡</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;min-height:100vh;background:#050505;color:#fff;
+  display:grid;place-items:center;font-family:Arial,Helvetica,sans-serif;
+  overflow:hidden
+}
+.container{width:100%;padding:24px 12px;text-align:center}
+#stage{color:#aaa;font-size:18px;margin-bottom:22px;min-height:22px}
+canvas{display:block;width:min(100%,430px);height:auto;margin:auto}
+#percent{
+  display:inline-block;margin-top:18px;padding:9px 19px;border-radius:28px;
+  background:#292929;color:#bbb;font-size:17px
+}
+#final{
+  display:none;margin:24px 0 0;color:#ff83bd;font-size:clamp(27px,7vw,40px);
+  font-weight:800;letter-spacing:1px;text-shadow:0 0 18px #ff4fa7;
+  animation:glow 1.8s ease-in-out infinite alternate
+}
+#hint{color:#777;font-size:12px;margin-top:28px}
+@keyframes glow{from{opacity:.72;transform:scale(.98)}to{opacity:1;transform:scale(1.035)}}
+@media(prefers-reduced-motion:reduce){#final{animation:none}}
+</style>
+</head>
+<body>
+<main class="container">
+  <div id="stage">Sketching it out</div>
+  <canvas id="canvas" width="700" height="500" aria-label="An animated message made of glowing dots"></canvas>
+  <div id="percent">0%</div>
+  <div id="final">I LOVE YOU 5'1 ♡</div>
+  <div id="hint">made with love, just for you</div>
+</main>
+<script>
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+const off=document.createElement("canvas");
+off.width=700;off.height=500;
+const octx=off.getContext("2d");
+octx.fillStyle="#fff";
+octx.textAlign="center";
+octx.textBaseline="middle";
+octx.font="800 100px Arial";
+octx.fillText("I LOVE YOU",350,195);
+octx.font="800 112px Arial";
+octx.fillText("5'1 ♡",350,330);
+
+const pixels=octx.getImageData(0,0,700,500).data;
+const dots=[];
+for(let y=0;y<500;y+=11){
+  for(let x=0;x<700;x+=11){
+    if(pixels[(y*700+x)*4+3]>90){
+      dots.push({x,y,delay:Math.random()*38,phase:Math.random()*Math.PI*2});
+    }
+  }
+}
+for(let y=12;y<500;y+=22){
+  for(let x=12;x<700;x+=22){
+    const index=(y*700+x)*4+3;
+    if(pixels[index]<=90 && Math.random()<.23){
+      dots.push({x,y,delay:Math.random()*65,phase:Math.random()*Math.PI*2,soft:true});
+    }
+  }
+}
+let progress=0,last=0;
+function draw(time){
+  ctx.clearRect(0,0,700,500);
+  if(!last)last=time;
+  const dt=Math.min(50,time-last);last=time;
+  if(progress<100)progress=Math.min(100,progress+dt/230);
+  dots.forEach((d,i)=>{
+    const reveal=Math.max(0,Math.min(1,(progress-d.delay)/24));
+    if(reveal<=0)return;
+    const pulse=.78+.22*Math.sin(time/350+d.phase);
+    const r=(d.soft?1.5:2.1+reveal*1.4)*pulse;
+    ctx.beginPath();
+    ctx.arc(d.x,d.y,r,0,Math.PI*2);
+    ctx.fillStyle=d.soft
+      ?`rgba(211,75,145,${reveal*.25})`
+      :`rgba(255,${105+i%55},${158+i%75},${reveal*pulse})`;
+    ctx.fill();
+  });
+  document.getElementById("percent").textContent=Math.floor(progress)+"%";
+  if(progress>48)document.getElementById("stage").textContent="Setting the scene";
+  if(progress>=100){
+    document.getElementById("stage").textContent="A little message for you...";
+    document.getElementById("percent").style.display="none";
+    document.getElementById("final").style.display="block";
+    document.getElementById("hint").textContent="♡";
+  }
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+</script>
+</body>
+</html>
